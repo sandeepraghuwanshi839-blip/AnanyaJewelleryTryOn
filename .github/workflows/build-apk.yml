@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -11,24 +12,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
       - name: Extract Android project
         run: |
-          mkdir project
+          mkdir -p project
           unzip -q *.zip -d project
 
-      - name: Find project
+      - name: Find Android project
         run: |
-          find project -name gradlew -type f
+          PROJECT_DIR=$(find project -name settings.gradle.kts -type f -print -quit | xargs dirname)
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
       - name: Build APK
         run: |
-          GRADLEW=$(find project -name gradlew -type f | head -1)
-          chmod +x "$GRADLEW"
-          cd "$(dirname "$GRADLEW")"
-          ./gradlew assembleDebug
+          gradle -p "$PROJECT_DIR" assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Ananya-Jewellery-TryOn-APK
-          path: project/**/build/outputs/apk/**/*.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk

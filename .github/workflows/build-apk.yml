@@ -1,0 +1,34 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Android project
+        run: |
+          mkdir project
+          unzip -q *.zip -d project
+
+      - name: Find project
+        run: |
+          find project -name gradlew -type f
+
+      - name: Build APK
+        run: |
+          GRADLEW=$(find project -name gradlew -type f | head -1)
+          chmod +x "$GRADLEW"
+          cd "$(dirname "$GRADLEW")"
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ananya-Jewellery-TryOn-APK
+          path: project/**/build/outputs/apk/**/*.apk
